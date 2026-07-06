@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>노래방 번호검색</title>
+<meta name="description" content="TJ미디어·금영 노래방 곡번호를 곡명 또는 가수로 검색">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --card-hover: #222633;
+    --text: #e8eaf0;
+    --text-dim: #9aa0b0;
+    --accent: #7c5cff;
+    --tj: #4d9fff;
+    --ky: #ff7043;
+    --radius: 14px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 0 16px; }
+
+  header {
+    text-align: center;
+    padding: 28px 0 8px;
+  }
+  header h1 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  header h1 .mic { font-size: 1.3rem; margin-right: 6px; }
+  header p { color: var(--text-dim); font-size: 0.82rem; margin-top: 4px; }
+
+  /* 브랜드 선택 탭 */
+  .brand-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 18px 0 10px;
+  }
+  .brand-tabs button {
+    flex: 1;
+    padding: 10px 0;
+    border: 1.5px solid #2c3140;
+    border-radius: var(--radius);
+    background: var(--card);
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .brand-tabs button.active[data-brand="all"] { border-color: var(--accent); color: var(--accent); background: rgba(124,92,255,.1); }
+  .brand-tabs button.active[data-brand="tj"]  { border-color: var(--tj); color: var(--tj); background: rgba(77,159,255,.1); }
+  .brand-tabs button.active[data-brand="kumyoung"] { border-color: var(--ky); color: var(--ky); background: rgba(255,112,67,.1); }
+
+  /* 검색 영역 */
+  .search-box {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .search-box input {
+    flex: 1;
+    padding: 14px 16px;
+    border: 1.5px solid #2c3140;
+    border-radius: var(--radius);
+    background: var(--card);
+    color: var(--text);
+    font-size: 1.05rem;
+    outline: none;
+  }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-box input::placeholder { color: #5a6070; }
+  .search-box button {
+    padding: 0 20px;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .search-box button:active { transform: scale(.97); }
+
+  .mode-toggle {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .mode-toggle button {
+    padding: 7px 16px;
+    border: 1px solid #2c3140;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .mode-toggle button.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* 최근 검색 */
+  .recent {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .recent .chip {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--card);
+    border: 1px solid #2c3140;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .recent .chip:active { background: var(--card-hover); }
+
+  /* 상태 메시지 */
+  .status {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 40px 0;
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+  .status .big { font-size: 2.2rem; display: block; margin-bottom: 8px; }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid #2c3140;
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    margin: 40px auto;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 결과 카드 */
+  .result-count {
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    margin-bottom: 10px;
+  }
+  .song {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background .15s;
+    border: 1px solid transparent;
+  }
+  .song:active { background: var(--card-hover); }
+  .song .no {
+    min-width: 76px;
+    text-align: center;
+    padding: 10px 6px;
+    border-radius: 10px;
+    font-size: 1.25rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+  .song .no.tj { background: rgba(77,159,255,.14); color: var(--tj); }
+  .song .no.kumyoung { background: rgba(255,112,67,.14); color: var(--ky); }
+  .song .no small { display: block; font-size: 0.62rem; font-weight: 700; opacity: .8; margin-bottom: 2px; letter-spacing: .05em; }
+  .song .info { flex: 1; min-width: 0; }
+  .song .title {
+    font-weight: 700;
+    font-size: 0.98rem;
+    line-height: 1.35;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+  .song .singer {
+    color: var(--text-dim);
+    font-size: 0.84rem;
+    margin-top: 3px;
+    overflow-wrap: anywhere;
+  }
+  .song .release { color: #5a6070; font-size: 0.72rem; margin-top: 3px; }
+
+  /* 복사 토스트 */
+  #toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--accent);
+    color: #fff;
+    padding: 11px 22px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    opacity: 0;
+    transition: all .25s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 10;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  footer {
+    text-align: center;
+    color: #4a5060;
+    font-size: 0.72rem;
+    margin-top: 30px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="mic">🎤</span>노래방 번호검색</h1>
+    <p>TJ미디어 · 금영 곡번호를 한 번에</p>
+  </header>
+
+  <div class="brand-tabs" id="brandTabs">
+    <button data-brand="all" class="active">전체</button>
+    <button data-brand="tj">TJ</button>
+    <button data-brand="kumyoung">금영</button>
+  </div>
+
+  <div class="search-box">
+    <input type="search" id="query" placeholder="곡명을 입력하세요" autocomplete="off" enterkeyhint="search">
+    <button id="searchBtn">검색</button>
+  </div>
+
+  <div class="mode-toggle" id="modeToggle">
+    <button data-mode="song" class="active">곡명</button>
+    <button data-mode="singer">가수</button>
+  </div>
+
+  <div class="recent" id="recent"></div>
+
+  <div id="results">
+    <div class="status">
+      <span class="big">🎵</span>
+      부르고 싶은 노래를 검색해 보세요<br>
+      번호를 누르면 복사됩니다
+    </div>
+  </div>
+
+  <footer>
+    데이터 출처: TJ미디어 · 금영(kysing.kr) 공식 검색<br>
+    공식 검색 불가 시 api.manana.kr(비공식)로 대체됩니다
+  </footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function () {
+  const API = 'https://api.manana.kr/karaoke';
+  const $query = document.getElementById('query');
+  const $results = document.getElementById('results');
+  const $recent = document.getElementById('recent');
+  const $toast = document.getElementById('toast');
+
+  let brand = 'all';   // all | tj | kumyoung
+  let mode = 'song';   // song | singer
+  let searchSeq = 0;   // 늦게 도착한 이전 검색 응답 무시용
+
+  // ── 탭/토글 ──────────────────────────────
+  document.getElementById('brandTabs').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    brand = btn.dataset.brand;
+    document.querySelectorAll('#brandTabs button').forEach(b => b.classList.toggle('active', b === btn));
+    if ($query.value.trim()) doSearch();
+  });
+
+  document.getElementById('modeToggle').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    mode = btn.dataset.mode;
+    document.querySelectorAll('#modeToggle button').forEach(b => b.classList.toggle('active', b === btn));
+    $query.placeholder = mode === 'song' ? '곡명을 입력하세요' : '가수명을 입력하세요';
+    if ($query.value.trim()) doSearch();
+  });
+
+  document.getElementById('searchBtn').addEventListener('click', doSearch);
+  $query.addEventListener('keydown', e => { if (e.key === 'Enter') { $query.blur(); doSearch(); } });
+
+  // ── 최근 검색 ────────────────────────────
+  function loadRecent() {
+    try { return JSON.parse(localStorage.getItem('krk_recent') || '[]'); } catch { return []; }
+  }
+  function saveRecent(q) {
+    const list = loadRecent().filter(x => x !== q);
+    list.unshift(q);
+    localStorage.setItem('krk_recent', JSON.stringify(list.slice(0, 8)));
+    renderRecent();
+  }
+  function renderRecent() {
+    const list = loadRecent();
+    $recent.innerHTML = list.map(q =>
+      `<span class="chip" data-q="${escapeHtml(q)}">${escapeHtml(q)}</span>`).join('');
+  }
+  $recent.addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    $query.value = chip.dataset.q;
+    doSearch();
+  });
+  renderRecent();
+
+  // ── 검색 ────────────────────────────────
+  // 1순위: 자체 프록시(/api/search) — TJ미디어·kysing.kr 공식 데이터
+  // 2순위: 프록시 접속 불가 시(로컬 파일로 열었을 때 등) manana.kr 직접 호출
+  async function doSearch() {
+    const q = $query.value.trim();
+    if (!q) return;
+    const seq = ++searchSeq;
+    $results.innerHTML = '<div class="spinner"></div>';
+    saveRecent(q);
+
+    try {
+      const r = await fetch(`/api/search?q=${encodeURIComponent(q)}&mode=${mode}&brand=${brand}`);
+      if (!r.ok) throw new Error('proxy ' + r.status);
+      const data = await r.json();
+      if (seq !== searchSeq) return;
+      const songs = data.results.flatMap(x => x.songs);
+      const official = data.results.some(x => x.source === 'official');
+      render(songs, q, official ? '공식 데이터' : '보조 데이터');
+      return;
+    } catch { /* 프록시 불가 → manana 직접 */ }
+
+    const brands = brand === 'all' ? ['tj', 'kumyoung'] : [brand];
+    try {
+      const lists = await Promise.all(brands.map(b =>
+        fetch(`${API}/${mode}/${encodeURIComponent(q)}/${b}.json`)
+          .then(r => r.ok ? r.json() : [])
+          .then(d => Array.isArray(d) ? d : [])
+          .catch(() => [])
+      ));
+      if (seq !== searchSeq) return; // 더 최신 검색이 진행됨
+      render(lists.flat(), q, '보조 데이터');
+    } catch {
+      if (seq !== searchSeq) return;
+      $results.innerHTML = '<div class="status"><span class="big">⚠️</span>검색 중 오류가 발생했습니다<br>네트워크 상태를 확인해 주세요</div>';
+    }
+  }
+
+  function render(songs, q, source) {
+    if (!songs.length) {
+      $results.innerHTML = `<div class="status"><span class="big">🙁</span>‘${escapeHtml(q)}’ 검색 결과가 없어요<br>띄어쓰기를 바꾸거나 일부만 입력해 보세요</div>`;
+      return;
+    }
+    const html = songs.map(s => {
+      const bc = s.brand === 'tj' ? 'tj' : 'kumyoung';
+      const bn = s.brand === 'tj' ? 'TJ' : '금영';
+      return `<div class="song" data-no="${escapeHtml(s.no)}" data-brand="${bn}">
+        <div class="no ${bc}"><small>${bn}</small>${escapeHtml(s.no)}</div>
+        <div class="info">
+          <div class="title">${escapeHtml(s.title)}</div>
+          <div class="singer">${escapeHtml(s.singer)}</div>
+          ${s.release && s.release !== '0000-00-00' ? `<div class="release">${escapeHtml(s.release)}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    $results.innerHTML = `<div class="result-count">${songs.length}곡${source ? ' · ' + escapeHtml(source) : ''}</div>` + html;
+  }
+
+  // 번호 탭 → 클립보드 복사
+  $results.addEventListener('click', e => {
+    const card = e.target.closest('.song');
+    if (!card) return;
+    const no = card.dataset.no;
+    const copy = navigator.clipboard
+      ? navigator.clipboard.writeText(no)
+      : Promise.reject();
+    copy.then(() => showToast(`${card.dataset.brand} ${no} 복사됨`))
+        .catch(() => showToast(`${card.dataset.brand} ${no}`));
+  });
+
+  let toastTimer;
+  function showToast(msg) {
+    $toast.textContent = msg;
+    $toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => $toast.classList.remove('show'), 1600);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+})();
+</script>
+</body>
+</html>
