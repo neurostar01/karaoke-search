@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>노래방 번호검색</title>
-<meta name="description" content="TJ미디어·금영 노래방 곡번호를 곡명 또는 가수로 검색">
+<meta name="description" content="TJ미디어·금영 노래방 곡번호 검색, 최신곡, 인기차트, 7080 명곡">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
 <style>
   :root {
@@ -31,7 +31,7 @@
 
   header {
     text-align: center;
-    padding: 28px 0 8px;
+    padding: 24px 0 6px;
   }
   header h1 {
     font-size: 1.5rem;
@@ -41,20 +41,41 @@
   header h1 .mic { font-size: 1.3rem; margin-right: 6px; }
   header p { color: var(--text-dim); font-size: 0.82rem; margin-top: 4px; }
 
+  /* 화면(뷰) 탭 */
+  .view-tabs {
+    display: flex;
+    gap: 4px;
+    margin: 16px 0 4px;
+    border-bottom: 1.5px solid #2c3140;
+  }
+  .view-tabs button {
+    flex: 1;
+    padding: 11px 0 10px;
+    border: none;
+    border-bottom: 2.5px solid transparent;
+    margin-bottom: -1.5px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .view-tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+
   /* 브랜드 선택 탭 */
   .brand-tabs {
     display: flex;
     gap: 8px;
-    margin: 18px 0 10px;
+    margin: 14px 0 10px;
   }
   .brand-tabs button {
     flex: 1;
-    padding: 10px 0;
+    padding: 9px 0;
     border: 1.5px solid #2c3140;
     border-radius: var(--radius);
     background: var(--card);
     color: var(--text-dim);
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 700;
     cursor: pointer;
     transition: all .15s;
@@ -71,6 +92,7 @@
   }
   .search-box input {
     flex: 1;
+    min-width: 0;
     padding: 14px 16px;
     border: 1.5px solid #2c3140;
     border-radius: var(--radius);
@@ -96,7 +118,7 @@
   .mode-toggle {
     display: flex;
     gap: 6px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
   .mode-toggle button {
     padding: 7px 16px;
@@ -119,7 +141,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
   .recent .chip {
     padding: 6px 12px;
@@ -157,36 +179,59 @@
     font-size: 0.82rem;
     margin-bottom: 10px;
   }
+  .group-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    margin: 18px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .group-title.tj { color: var(--tj); }
+  .group-title.kumyoung { color: var(--ky); }
+  .group-title small { color: var(--text-dim); font-weight: 500; font-size: 0.75rem; }
   .song {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
     background: var(--card);
     border-radius: var(--radius);
-    padding: 14px;
+    padding: 12px 14px;
     margin-bottom: 8px;
-    cursor: pointer;
     transition: background .15s;
-    border: 1px solid transparent;
   }
   .song:active { background: var(--card-hover); }
+  .song .rank {
+    min-width: 26px;
+    text-align: center;
+    color: var(--text-dim);
+    font-weight: 800;
+    font-size: 0.95rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .song .rank.top3 { color: #ffd54f; }
   .song .no {
     min-width: 76px;
     text-align: center;
-    padding: 10px 6px;
+    padding: 9px 6px;
     border-radius: 10px;
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;
+    cursor: pointer;
   }
   .song .no.tj { background: rgba(77,159,255,.14); color: var(--tj); }
   .song .no.kumyoung { background: rgba(255,112,67,.14); color: var(--ky); }
   .song .no small { display: block; font-size: 0.62rem; font-weight: 700; opacity: .8; margin-bottom: 2px; letter-spacing: .05em; }
+  .song .no-col { display: flex; flex-direction: column; gap: 4px; }
+  .song .no-col .no { padding: 5px 6px; font-size: 1.02rem; }
+  .song .no-col .no small { display: inline; margin-right: 5px; font-size: 0.6rem; }
+  .song .no.none { background: #232734; color: #5a6070; font-size: 0.8rem; padding: 8px 6px; cursor: default; }
   .song .info { flex: 1; min-width: 0; }
   .song .title {
     font-weight: 700;
-    font-size: 0.98rem;
+    font-size: 0.97rem;
     line-height: 1.35;
     word-break: keep-all;
     overflow-wrap: anywhere;
@@ -226,6 +271,7 @@
     margin-top: 30px;
     line-height: 1.6;
   }
+  .hidden { display: none !important; }
 </style>
 </head>
 <body>
@@ -235,23 +281,32 @@
     <p>TJ미디어 · 금영 곡번호를 한 번에</p>
   </header>
 
+  <div class="view-tabs" id="viewTabs">
+    <button data-view="search" class="active">검색</button>
+    <button data-view="new">신곡</button>
+    <button data-view="chart">인기</button>
+    <button data-view="7080">7080</button>
+  </div>
+
   <div class="brand-tabs" id="brandTabs">
     <button data-brand="all" class="active">전체</button>
     <button data-brand="tj">TJ</button>
     <button data-brand="kumyoung">금영</button>
   </div>
 
-  <div class="search-box">
-    <input type="search" id="query" placeholder="곡명을 입력하세요" autocomplete="off" enterkeyhint="search">
-    <button id="searchBtn">검색</button>
-  </div>
+  <div id="searchArea">
+    <div class="search-box">
+      <input type="search" id="query" placeholder="곡명을 입력하세요" autocomplete="off" enterkeyhint="search">
+      <button id="searchBtn">검색</button>
+    </div>
 
-  <div class="mode-toggle" id="modeToggle">
-    <button data-mode="song" class="active">곡명</button>
-    <button data-mode="singer">가수</button>
-  </div>
+    <div class="mode-toggle" id="modeToggle">
+      <button data-mode="song" class="active">곡명</button>
+      <button data-mode="singer">가수</button>
+    </div>
 
-  <div class="recent" id="recent"></div>
+    <div class="recent" id="recent"></div>
+  </div>
 
   <div id="results">
     <div class="status">
@@ -270,24 +325,128 @@
 <div id="toast"></div>
 
 <script>
+// 7080 명곡 데이터 — 빌드 시점에 TJ·금영 공식 검색으로 곡번호 확인함 (null = 해당 반주기에 없음)
+const SONGS_7080 = [
+{t:"아침이슬",a:"양희은",tj:"11372",ky:"538"},
+{t:"님과 함께",a:"남진",tj:"411",ky:"648"},
+{t:"개여울",a:"정미조",tj:"823",ky:"118"},
+{t:"그건 너",a:"이장희",tj:"4005",ky:"164"},
+{t:"편지",a:"어니언스",tj:"106",ky:"751"},
+{t:"이별",a:"패티김",tj:"553",ky:"632"},
+{t:"나 그대에게 모두 드리리",a:"이장희",tj:"230",ky:"197"},
+{t:"미인",a:"신중현",tj:"1555",ky:"2372"},
+{t:"이름 모를 소녀",a:"김정호",tj:"281",ky:"630"},
+{t:"고래사냥",a:"송창식",tj:"789",ky:"808"},
+{t:"왜 불러",a:"송창식",tj:"4032",ky:"942"},
+{t:"돌아와요 부산항에",a:"조용필",tj:"557",ky:"290"},
+{t:"내 마음 갈 곳을 잃어",a:"최백호",tj:"582",ky:"229"},
+{t:"오동잎",a:"최헌",tj:"476",ky:"596"},
+{t:"감수광",a:"혜은이",tj:"449",ky:"112"},
+{t:"아니 벌써",a:"산울림",tj:"1991",ky:"3105"},
+{t:"나 어떡해",a:"샌드페블즈",tj:"414",ky:"1136"},
+{t:"밤차",a:"이은하",tj:"2695",ky:"1180"},
+{t:"모모",a:"김만준",tj:"1256",ky:"1168"},
+{t:"한동안 뜸했었지",a:"사랑과 평화",tj:"2054",ky:"2572"},
+{t:"밤에 떠난 여인",a:"하남석",tj:"1270",ky:"882"},
+{t:"연안부두",a:"김트리오",tj:"540",ky:"581"},
+{t:"열애",a:"윤시내",tj:"387",ky:"586"},
+{t:"그때 그 사람",a:"심수봉",tj:"374",ky:"176"},
+{t:"여러분",a:"윤복희",tj:"534",ky:"1310"},
+{t:"앵두",a:"최헌",tj:"238",ky:"558"},
+{t:"아리송해",a:"이은하",tj:"1959",ky:"2049"},
+{t:"제3한강교",a:"혜은이",tj:"1696",ky:"1250"},
+{t:"창밖의 여자",a:"조용필",tj:"567",ky:"1797"},
+{t:"단발머리",a:"조용필",tj:"635",ky:"1461"},
+{t:"청춘",a:"산울림",tj:"438",ky:"2611"},
+{t:"어느 소녀의 사랑이야기",a:"민해경",tj:"1154",ky:"1215"},
+{t:"어쩌다 마주친 그대",a:"송골매",tj:"1209",ky:"1220"},
+{t:"모두 다 사랑하리",a:"송골매",tj:"895",ky:"1411"},
+{t:"잊혀진 계절",a:"이용",tj:"512",ky:"659"},
+{t:"아파트",a:"윤수일",tj:"340",ky:"539"},
+{t:"잡초",a:"나훈아",tj:"603",ky:"670"},
+{t:"나는 행복합니다",a:"윤항기",tj:"560",ky:"823"},
+{t:"아! 대한민국",a:"정수라",tj:"782",ky:"523"},
+{t:"잃어버린 삼십 년",a:"설운도",tj:"770",ky:"647"},
+{t:"멍에",a:"김수희",tj:"318",ky:"338"},
+{t:"우리는",a:"송창식",tj:"1810",ky:"2486"},
+{t:"친구여",a:"조용필",tj:"779",ky:"732"},
+{t:"가을을 남기고 간 사랑",a:"패티김",tj:"360",ky:"106"},
+{t:"하얀나비",a:"김정호",tj:"140",ky:"755"},
+{t:"사랑의 미로",a:"최진희",tj:"83",ky:"456"},
+{t:"남자는 배 여자는 항구",a:"심수봉",tj:"4021",ky:"89025"},
+{t:"J에게",a:"이선희",tj:"539",ky:"688"},
+{t:"환희",a:"정수라",tj:"25",ky:"89023"},
+{t:"너의 의미",a:"산울림",tj:"2969",ky:"63881"},
+{t:"아! 옛날이여",a:"이선희",tj:"186",ky:"536"},
+{t:"그 겨울의 찻집",a:"조용필",tj:"1481",ky:"1454"},
+{t:"희나리",a:"구창모",tj:"178",ky:"796"},
+{t:"스잔",a:"김승진",tj:"1463",ky:"921"},
+{t:"행진",a:"들국화",tj:"1113",ky:"2577"},
+{t:"그것만이 내 세상",a:"들국화",tj:"1780",ky:"1329"},
+{t:"한계령",a:"양희은",tj:"1932",ky:"2390"},
+{t:"비 내리는 영동교",a:"주현미",tj:"815",ky:"1290"},
+{t:"난 아직 모르잖아요",a:"이문세",tj:"631",ky:"828"},
+{t:"토요일은 밤이 좋아",a:"김종찬",tj:"451",ky:"745"},
+{t:"집시여인",a:"이치현",tj:"20",ky:"696"},
+{t:"사랑하기 때문에",a:"유재하",tj:"241",ky:"1679"},
+{t:"어젯밤 이야기",a:"소방차",tj:"2810",ky:"567"},
+{t:"리듬 속에 그 춤을",a:"김완선",tj:"3634",ky:"4350"},
+{t:"남행열차",a:"김수희",tj:"911",ky:"1367"},
+{t:"사랑이 지나가면",a:"이문세",tj:"604",ky:"1190"},
+{t:"사랑이 저만치 가네",a:"김종찬",tj:"265",ky:"463"},
+{t:"사랑밖엔 난 몰라",a:"심수봉",tj:"1486",ky:"1468"},
+{t:"무시로",a:"나훈아",tj:"370",ky:"357"},
+{t:"신사동 그 사람",a:"주현미",tj:"902",ky:"1471"},
+{t:"봉선화 연정",a:"현철",tj:"185",ky:"890"},
+{t:"광화문 연가",a:"이문세",tj:"1624",ky:"3557"},
+{t:"붉은 노을",a:"이문세",tj:"1842",ky:"1482"},
+{t:"홀로 된다는 것",a:"변진섭",tj:"168",ky:"781"},
+{t:"널 그리며",a:"박남정",tj:"351",ky:"241"},
+{t:"담다디",a:"이상은",tj:"1163",ky:"857"},
+{t:"옥경이",a:"태진아",tj:"63",ky:"599"},
+{t:"짝사랑",a:"주현미",tj:"233",ky:"664"},
+{t:"희망사항",a:"변진섭",tj:"829",ky:"798"},
+{t:"만남",a:"노사연",tj:"615",ky:"328"},
+{t:"사랑으로",a:"해바라기",tj:"234",ky:"443"},
+];
+</script>
+<script>
 (function () {
   const API = 'https://api.manana.kr/karaoke';
   const $query = document.getElementById('query');
   const $results = document.getElementById('results');
   const $recent = document.getElementById('recent');
   const $toast = document.getElementById('toast');
+  const $searchArea = document.getElementById('searchArea');
 
-  let brand = 'all';   // all | tj | kumyoung
-  let mode = 'song';   // song | singer
-  let searchSeq = 0;   // 늦게 도착한 이전 검색 응답 무시용
+  let view = 'search';   // search | new | chart | 7080
+  let brand = 'all';     // all | tj | kumyoung
+  let mode = 'song';     // song | singer
+  let searchSeq = 0;     // 늦게 도착한 이전 요청 무시용
+  const listCache = {};  // 신곡/인기 응답 캐시 (view+brand 별)
+
+  const BRAND_LABEL = { tj: 'TJ', kumyoung: '금영' };
+  const GROUP_TITLE = {
+    new:   { tj: 'TJ 이달의 신곡', kumyoung: '금영 최신곡' },
+    chart: { tj: 'TJ 인기순위 TOP100', kumyoung: '금영 인기차트' },
+  };
 
   // ── 탭/토글 ──────────────────────────────
+  document.getElementById('viewTabs').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    view = btn.dataset.view;
+    document.querySelectorAll('#viewTabs button').forEach(b => b.classList.toggle('active', b === btn));
+    $searchArea.classList.toggle('hidden', view !== 'search');
+    refreshView();
+  });
+
   document.getElementById('brandTabs').addEventListener('click', e => {
     const btn = e.target.closest('button');
     if (!btn) return;
     brand = btn.dataset.brand;
     document.querySelectorAll('#brandTabs button').forEach(b => b.classList.toggle('active', b === btn));
-    if ($query.value.trim()) doSearch();
+    refreshView();
   });
 
   document.getElementById('modeToggle').addEventListener('click', e => {
@@ -301,6 +460,17 @@
 
   document.getElementById('searchBtn').addEventListener('click', doSearch);
   $query.addEventListener('keydown', e => { if (e.key === 'Enter') { $query.blur(); doSearch(); } });
+
+  function refreshView() {
+    if (view === 'search') {
+      if ($query.value.trim()) doSearch();
+      else $results.innerHTML = '<div class="status"><span class="big">🎵</span>부르고 싶은 노래를 검색해 보세요<br>번호를 누르면 복사됩니다</div>';
+    } else if (view === '7080') {
+      render7080();
+    } else {
+      loadList(view);
+    }
+  }
 
   // ── 최근 검색 ────────────────────────────
   function loadRecent() {
@@ -339,10 +509,10 @@
       const r = await fetch(`/api/search?q=${encodeURIComponent(q)}&mode=${mode}&brand=${brand}`);
       if (!r.ok) throw new Error('proxy ' + r.status);
       const data = await r.json();
-      if (seq !== searchSeq) return;
+      if (seq !== searchSeq || view !== 'search') return;
       const songs = data.results.flatMap(x => x.songs);
       const official = data.results.some(x => x.source === 'official');
-      render(songs, q, official ? '공식 데이터' : '보조 데이터');
+      renderSongs(songs, q, official ? '공식 데이터' : '보조 데이터');
       return;
     } catch { /* 프록시 불가 → manana 직접 */ }
 
@@ -354,44 +524,111 @@
           .then(d => Array.isArray(d) ? d : [])
           .catch(() => [])
       ));
-      if (seq !== searchSeq) return; // 더 최신 검색이 진행됨
-      render(lists.flat(), q, '보조 데이터');
+      if (seq !== searchSeq || view !== 'search') return;
+      renderSongs(lists.flat(), q, '보조 데이터');
     } catch {
-      if (seq !== searchSeq) return;
+      if (seq !== searchSeq || view !== 'search') return;
       $results.innerHTML = '<div class="status"><span class="big">⚠️</span>검색 중 오류가 발생했습니다<br>네트워크 상태를 확인해 주세요</div>';
     }
   }
 
-  function render(songs, q, source) {
+  // ── 신곡 / 인기 ─────────────────────────
+  async function loadList(type) {
+    const key = type + ':' + brand;
+    const seq = ++searchSeq;
+    if (listCache[key]) { renderList(type, listCache[key]); return; }
+    $results.innerHTML = '<div class="spinner"></div>';
+    try {
+      const r = await fetch(`/api/list?type=${type}&brand=${brand}`);
+      if (!r.ok) throw new Error('list ' + r.status);
+      const data = await r.json();
+      if (seq !== searchSeq || view !== type) return;
+      listCache[key] = data;
+      renderList(type, data);
+    } catch {
+      if (seq !== searchSeq || view !== type) return;
+      $results.innerHTML = '<div class="status"><span class="big">⚠️</span>목록을 불러오지 못했습니다<br>잠시 후 다시 시도해 주세요</div>';
+    }
+  }
+
+  function renderList(type, data) {
+    let html = '';
+    let total = 0;
+    for (const res of data.results) {
+      if (!res.songs.length) continue;
+      total += res.songs.length;
+      const gt = GROUP_TITLE[type][res.brand];
+      html += `<div class="group-title ${res.brand}">${gt} <small>${res.songs.length}곡</small></div>`;
+      html += res.songs.map((s, i) => songCard(s, type === 'chart' ? i + 1 : null)).join('');
+    }
+    if (!total) {
+      $results.innerHTML = '<div class="status"><span class="big">🙁</span>목록을 불러오지 못했습니다<br>잠시 후 다시 시도해 주세요</div>';
+      return;
+    }
+    $results.innerHTML = html;
+  }
+
+  // ── 7080 ────────────────────────────────
+  function render7080() {
+    const items = SONGS_7080.filter(s =>
+      brand === 'all' ? (s.tj || s.ky) : (brand === 'tj' ? s.tj : s.ky));
+    if (!items.length) {
+      $results.innerHTML = '<div class="status"><span class="big">🙁</span>표시할 곡이 없습니다</div>';
+      return;
+    }
+    let html = `<div class="result-count">7080 명곡 ${items.length}곡 · 발표순</div>`;
+    html += items.map(s => {
+      let badges;
+      if (brand === 'all') {
+        badges = '<div class="no-col">' +
+          (s.tj ? `<div class="no tj" data-copy="${s.tj}" data-b="TJ"><small>TJ</small>${s.tj}</div>` : '<div class="no none">TJ 없음</div>') +
+          (s.ky ? `<div class="no kumyoung" data-copy="${s.ky}" data-b="금영"><small>금영</small>${s.ky}</div>` : '<div class="no none">금영 없음</div>') +
+          '</div>';
+      } else {
+        const no = brand === 'tj' ? s.tj : s.ky;
+        const cls = brand === 'tj' ? 'tj' : 'kumyoung';
+        badges = `<div class="no ${cls}" data-copy="${no}" data-b="${BRAND_LABEL[brand]}"><small>${BRAND_LABEL[brand]}</small>${no}</div>`;
+      }
+      return `<div class="song">${badges}<div class="info"><div class="title">${escapeHtml(s.t)}</div><div class="singer">${escapeHtml(s.a)}</div></div></div>`;
+    }).join('');
+    $results.innerHTML = html;
+  }
+
+  // ── 공통 렌더 ────────────────────────────
+  function songCard(s, rank) {
+    const bc = s.brand === 'tj' ? 'tj' : 'kumyoung';
+    const bn = BRAND_LABEL[s.brand] || s.brand;
+    const rk = rank ? `<div class="rank${rank <= 3 ? ' top3' : ''}">${rank}</div>` : '';
+    return `<div class="song">${rk}
+      <div class="no ${bc}" data-copy="${escapeHtml(s.no)}" data-b="${bn}"><small>${bn}</small>${escapeHtml(s.no)}</div>
+      <div class="info">
+        <div class="title">${escapeHtml(s.title)}</div>
+        <div class="singer">${escapeHtml(s.singer)}</div>
+        ${s.release && s.release !== '0000-00-00' ? `<div class="release">${escapeHtml(s.release)}</div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  function renderSongs(songs, q, source) {
     if (!songs.length) {
       $results.innerHTML = `<div class="status"><span class="big">🙁</span>‘${escapeHtml(q)}’ 검색 결과가 없어요<br>띄어쓰기를 바꾸거나 일부만 입력해 보세요</div>`;
       return;
     }
-    const html = songs.map(s => {
-      const bc = s.brand === 'tj' ? 'tj' : 'kumyoung';
-      const bn = s.brand === 'tj' ? 'TJ' : '금영';
-      return `<div class="song" data-no="${escapeHtml(s.no)}" data-brand="${bn}">
-        <div class="no ${bc}"><small>${bn}</small>${escapeHtml(s.no)}</div>
-        <div class="info">
-          <div class="title">${escapeHtml(s.title)}</div>
-          <div class="singer">${escapeHtml(s.singer)}</div>
-          ${s.release && s.release !== '0000-00-00' ? `<div class="release">${escapeHtml(s.release)}</div>` : ''}
-        </div>
-      </div>`;
-    }).join('');
+    const html = songs.map(s => songCard(s, null)).join('');
     $results.innerHTML = `<div class="result-count">${songs.length}곡${source ? ' · ' + escapeHtml(source) : ''}</div>` + html;
   }
 
   // 번호 탭 → 클립보드 복사
   $results.addEventListener('click', e => {
-    const card = e.target.closest('.song');
-    if (!card) return;
-    const no = card.dataset.no;
+    const badge = e.target.closest('[data-copy]');
+    if (!badge) return;
+    const no = badge.dataset.copy;
+    const bn = badge.dataset.b;
     const copy = navigator.clipboard
       ? navigator.clipboard.writeText(no)
       : Promise.reject();
-    copy.then(() => showToast(`${card.dataset.brand} ${no} 복사됨`))
-        .catch(() => showToast(`${card.dataset.brand} ${no}`));
+    copy.then(() => showToast(`${bn} ${no} 복사됨`))
+        .catch(() => showToast(`${bn} ${no}`));
   });
 
   let toastTimer;
