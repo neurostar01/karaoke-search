@@ -136,24 +136,6 @@
     color: #fff;
   }
 
-  /* 최근 검색 */
-  .recent {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 14px;
-  }
-  .recent .chip {
-    padding: 6px 12px;
-    border-radius: 999px;
-    background: var(--card);
-    border: 1px solid #2c3140;
-    color: var(--text-dim);
-    font-size: 0.8rem;
-    cursor: pointer;
-  }
-  .recent .chip:active { background: var(--card-hover); }
-
   /* 상태 메시지 */
   .status {
     text-align: center;
@@ -304,8 +286,6 @@
       <button data-mode="song" class="active">곡명</button>
       <button data-mode="singer">가수</button>
     </div>
-
-    <div class="recent" id="recent"></div>
   </div>
 
   <div id="results">
@@ -415,7 +395,6 @@ const SONGS_7080 = [
   const API = 'https://api.manana.kr/karaoke';
   const $query = document.getElementById('query');
   const $results = document.getElementById('results');
-  const $recent = document.getElementById('recent');
   const $toast = document.getElementById('toast');
   const $searchArea = document.getElementById('searchArea');
 
@@ -472,29 +451,6 @@ const SONGS_7080 = [
     }
   }
 
-  // ── 최근 검색 ────────────────────────────
-  function loadRecent() {
-    try { return JSON.parse(localStorage.getItem('krk_recent') || '[]'); } catch { return []; }
-  }
-  function saveRecent(q) {
-    const list = loadRecent().filter(x => x !== q);
-    list.unshift(q);
-    localStorage.setItem('krk_recent', JSON.stringify(list.slice(0, 8)));
-    renderRecent();
-  }
-  function renderRecent() {
-    const list = loadRecent();
-    $recent.innerHTML = list.map(q =>
-      `<span class="chip" data-q="${escapeHtml(q)}">${escapeHtml(q)}</span>`).join('');
-  }
-  $recent.addEventListener('click', e => {
-    const chip = e.target.closest('.chip');
-    if (!chip) return;
-    $query.value = chip.dataset.q;
-    doSearch();
-  });
-  renderRecent();
-
   // ── 검색 ────────────────────────────────
   // 1순위: 자체 프록시(/api/search) — TJ미디어·kysing.kr 공식 데이터
   // 2순위: 프록시 접속 불가 시(로컬 파일로 열었을 때 등) manana.kr 직접 호출
@@ -503,7 +459,6 @@ const SONGS_7080 = [
     if (!q) return;
     const seq = ++searchSeq;
     $results.innerHTML = '<div class="spinner"></div>';
-    saveRecent(q);
 
     try {
       const r = await fetch(`/api/search?q=${encodeURIComponent(q)}&mode=${mode}&brand=${brand}`);
