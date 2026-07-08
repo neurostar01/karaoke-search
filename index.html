@@ -56,9 +56,10 @@
     margin-bottom: -1.5px;
     background: transparent;
     color: var(--text-dim);
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     font-weight: 700;
     cursor: pointer;
+    white-space: nowrap;
   }
   .view-tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
 
@@ -225,6 +226,17 @@
     overflow-wrap: anywhere;
   }
   .song .release { color: #5a6070; font-size: 0.72rem; margin-top: 3px; }
+  .song .fav-btn {
+    border: none;
+    background: transparent;
+    color: #3a4050;
+    font-size: 1.4rem;
+    line-height: 1;
+    padding: 6px 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .song .fav-btn.on { color: #ffd54f; }
 
   /* 복사 토스트 */
   #toast {
@@ -268,6 +280,7 @@
     <button data-view="new">신곡</button>
     <button data-view="chart">인기</button>
     <button data-view="7080">7080</button>
+    <button data-view="fav">즐겨찾기</button>
   </div>
 
   <div class="brand-tabs" id="brandTabs">
@@ -398,11 +411,17 @@ const SONGS_7080 = [
   const $toast = document.getElementById('toast');
   const $searchArea = document.getElementById('searchArea');
 
-  let view = 'search';   // search | new | chart | 7080
+  let view = 'search';   // search | new | chart | 7080 | fav
   let brand = 'all';     // all | tj | kumyoung
   let mode = 'song';     // song | singer
   let searchSeq = 0;     // 늦게 도착한 이전 요청 무시용
   const listCache = {};  // 신곡/인기 응답 캐시 (view+brand 별)
+
+  // 즐겨찾기 — 이 기기(브라우저)에만 저장
+  let favs = [];
+  try { favs = JSON.parse(localStorage.getItem('krk_fav_v1') || '[]'); } catch { favs = []; }
+  function persistFavs() { localStorage.setItem('krk_fav_v1', JSON.stringify(favs)); }
+  function findFav(d) { return favs.findIndex(x => (d.tj && x.tj === d.tj) || (d.ky && x.ky === d.ky)); }
 
   const BRAND_LABEL = { tj: 'TJ', kumyoung: '금영' };
   const GROUP_TITLE = {
@@ -446,6 +465,8 @@ const SONGS_7080 = [
       else $results.innerHTML = '<div class="status"><span class="big">🎵</span>부르고 싶은 노래를 검색해 보세요<br>번호를 누르면 복사됩니다</div>';
     } else if (view === '7080') {
       render7080();
+    } else if (view === 'fav') {
+      renderFav();
     } else {
       loadList(view);
     }
@@ -523,7 +544,22 @@ const SONGS_7080 = [
     $results.innerHTML = html;
   }
 
-  // ── 7080 ────────────────────────────────
+  // ── 7080 / 즐겨찾기 (듀얼 번호 행) ─────────
+  function dualRow(s) {
+    let badges;
+    if (brand === 'all') {
+      badges = '<div class="no-col">' +
+        (s.tj ? `<div class="no tj" data-copy="${s.tj}" data-b="TJ"><small>TJ</small>${s.tj}</div>` : '<div class="no none">TJ 없음</div>') +
+        (s.ky ? `<div class="no kumyoung" data-copy="${s.ky}" data-b="금영"><small>금영</small>${s.ky}</div>` : '<div class="no none">금영 없음</div>') +
+        '</div>';
+    } else {
+      const no = brand === 'tj' ? s.tj : s.ky;
+      const cls = brand === 'tj' ? 'tj' : 'kumyoung';
+      badges = `<div class="no ${cls}" data-copy="${no}" data-b="${BRAND_LABEL[brand]}"><small>${BRAND_LABEL[brand]}</small>${no}</div>`;
+    }
+    return `<div class="song">${badges}<div class="info"><div class="title">${escapeHtml(s.t)}</div><div class="singer">${escapeHtml(s.a)}</div></div>${favBtn({ t: s.t, a: s.a, tj: s.tj || null, ky: s.ky || null })}</div>`;
+  }
+
   function render7080() {
     const items = SONGS_7080.filter(s =>
       brand === 'all' ? (s.tj || s.ky) : (brand === 'tj' ? s.tj : s.ky));
@@ -532,28 +568,34 @@ const SONGS_7080 = [
       return;
     }
     let html = `<div class="result-count">7080 명곡 ${items.length}곡 · 발표순</div>`;
-    html += items.map(s => {
-      let badges;
-      if (brand === 'all') {
-        badges = '<div class="no-col">' +
-          (s.tj ? `<div class="no tj" data-copy="${s.tj}" data-b="TJ"><small>TJ</small>${s.tj}</div>` : '<div class="no none">TJ 없음</div>') +
-          (s.ky ? `<div class="no kumyoung" data-copy="${s.ky}" data-b="금영"><small>금영</small>${s.ky}</div>` : '<div class="no none">금영 없음</div>') +
-          '</div>';
-      } else {
-        const no = brand === 'tj' ? s.tj : s.ky;
-        const cls = brand === 'tj' ? 'tj' : 'kumyoung';
-        badges = `<div class="no ${cls}" data-copy="${no}" data-b="${BRAND_LABEL[brand]}"><small>${BRAND_LABEL[brand]}</small>${no}</div>`;
-      }
-      return `<div class="song">${badges}<div class="info"><div class="title">${escapeHtml(s.t)}</div><div class="singer">${escapeHtml(s.a)}</div></div></div>`;
-    }).join('');
+    html += items.map(dualRow).join('');
+    $results.innerHTML = html;
+  }
+
+  function renderFav() {
+    let items = favs;
+    if (brand === 'tj') items = items.filter(s => s.tj);
+    if (brand === 'kumyoung') items = items.filter(s => s.ky);
+    if (!items.length) {
+      $results.innerHTML = '<div class="status"><span class="big">⭐</span>아직 즐겨찾기한 곡이 없어요<br>곡 옆의 별표(☆)를 눌러 저장해 보세요</div>';
+      return;
+    }
+    let html = `<div class="result-count">즐겨찾기 ${items.length}곡 · 이 기기에만 저장됩니다</div>`;
+    html += items.map(dualRow).join('');
     $results.innerHTML = html;
   }
 
   // ── 공통 렌더 ────────────────────────────
+  function favBtn(d) {
+    const on = findFav(d) >= 0;
+    return `<button class="fav-btn${on ? ' on' : ''}" data-fav="${escapeHtml(JSON.stringify(d))}" aria-label="즐겨찾기">${on ? '★' : '☆'}</button>`;
+  }
+
   function songCard(s, rank) {
     const bc = s.brand === 'tj' ? 'tj' : 'kumyoung';
     const bn = BRAND_LABEL[s.brand] || s.brand;
     const rk = rank ? `<div class="rank${rank <= 3 ? ' top3' : ''}">${rank}</div>` : '';
+    const d = { t: s.title, a: s.singer, tj: s.brand === 'tj' ? s.no : null, ky: s.brand === 'kumyoung' ? s.no : null };
     return `<div class="song">${rk}
       <div class="no ${bc}" data-copy="${escapeHtml(s.no)}" data-b="${bn}"><small>${bn}</small>${escapeHtml(s.no)}</div>
       <div class="info">
@@ -561,6 +603,7 @@ const SONGS_7080 = [
         <div class="singer">${escapeHtml(s.singer)}</div>
         ${s.release && s.release !== '0000-00-00' ? `<div class="release">${escapeHtml(s.release)}</div>` : ''}
       </div>
+      ${favBtn(d)}
     </div>`;
   }
 
@@ -573,8 +616,22 @@ const SONGS_7080 = [
     $results.innerHTML = `<div class="result-count">${songs.length}곡${source ? ' · ' + escapeHtml(source) : ''}</div>` + html;
   }
 
-  // 번호 탭 → 클립보드 복사
+  // 별표 → 즐겨찾기 토글 / 번호 탭 → 클립보드 복사
   $results.addEventListener('click', e => {
+    const fb = e.target.closest('.fav-btn');
+    if (fb) {
+      let d;
+      try { d = JSON.parse(fb.dataset.fav); } catch { return; }
+      const idx = findFav(d);
+      let on;
+      if (idx >= 0) { favs.splice(idx, 1); on = false; }
+      else { favs.unshift(d); on = true; }
+      persistFavs();
+      if (view === 'fav') renderFav();
+      else { fb.classList.toggle('on', on); fb.textContent = on ? '★' : '☆'; }
+      showToast(on ? '⭐ 즐겨찾기에 추가됨' : '즐겨찾기에서 제거됨');
+      return;
+    }
     const badge = e.target.closest('[data-copy]');
     if (!badge) return;
     const no = badge.dataset.copy;
